@@ -1,0 +1,992 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Review de Dashboard — Syonet</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap');
+:root{
+  --bg:#f6f5f0;--sur:#fff;--sur2:#f0efe8;--bd:#dedad0;--bd2:#c8c4b8;
+  --tx:#1c1a16;--tx2:#6a6760;--tx3:#a09d96;
+  --gn:#276130;--gn-bg:#eaf3eb;--gn-bd:#b0d8b4;
+  --rd:#891e1e;--rd-bg:#fdf0f0;--rd-bd:#edb8b8;
+  --bl:#1a4878;--bl-bg:#edf3fc;--bl-bd:#b0c8ee;
+  --ac:#1a4878;--r:6px;--rl:10px;
+  --mono:'IBM Plex Mono',monospace;--sans:'IBM Plex Sans',system-ui,sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:var(--sans);background:var(--bg);color:var(--tx);font-size:14px;line-height:1.6;min-height:100vh;}
+
+/* ── Top bar ── */
+.topbar{background:var(--sur);border-bottom:1px solid var(--bd);padding:0 32px;display:flex;align-items:center;gap:16px;height:52px;position:sticky;top:0;z-index:100;}
+.topbar-brand{font-size:13px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:var(--tx);}
+.topbar-sub{font-size:12px;color:var(--tx3);margin-left:2px;}
+.topbar-sep{width:1px;height:20px;background:var(--bd2);}
+
+/* ── Layout ── */
+.page{max-width:1100px;margin:0 auto;padding:28px 32px 60px;}
+
+/* ── Banner ── */
+.banner{background:var(--bl-bg);border:1px solid var(--bl-bd);border-radius:var(--r);padding:10px 16px;font-size:13px;color:var(--bl);margin-bottom:22px;display:flex;align-items:flex-start;gap:10px;}
+
+/* ── Cards ── */
+.card{background:var(--sur);border:1px solid var(--bd);border-radius:var(--rl);padding:22px 26px;margin-bottom:18px;}
+.card-title{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:var(--tx3);margin-bottom:14px;}
+
+/* ── Controls row ── */
+.controls-row{display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
+.controls-sep{width:1px;height:20px;background:var(--bd2);flex-shrink:0;}
+.controls-label{font-size:11px;color:var(--tx3);flex-shrink:0;}
+
+/* ── Form elements ── */
+label.lbl{font-size:11px;font-weight:500;color:var(--tx2);text-transform:uppercase;letter-spacing:.06em;display:block;margin-bottom:6px;}
+textarea,input[type=text]{width:100%;background:var(--bg);border:1px solid var(--bd);border-radius:var(--r);padding:8px 12px;font-family:var(--sans);font-size:13px;color:var(--tx);outline:none;resize:vertical;transition:border-color .15s;}
+textarea:focus,input:focus{border-color:var(--ac);}
+.mono-text{font-family:var(--mono);font-size:12px;}
+
+/* ── Grid ── */
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+@media(max-width:700px){.grid2{grid-template-columns:1fr;}}
+
+/* ── Buttons ── */
+button{font-family:var(--sans);font-size:13px;padding:8px 16px;border-radius:var(--r);cursor:pointer;border:1px solid var(--bd2);background:var(--sur);color:var(--tx);transition:background .12s;font-weight:400;}
+button:hover{background:var(--sur2);}
+button.primary{background:var(--tx);color:#fff;border-color:var(--tx);padding:9px 22px;font-size:14px;}
+button.primary:hover{background:#2c2a26;}
+button.sm{font-size:11px;padding:3px 10px;}
+button.danger{color:var(--rd);border-color:var(--rd-bd);}
+button.danger:hover{background:var(--rd-bg);}
+.jt{font-size:12px;padding:4px 12px;border-radius:99px;border:1px solid var(--bd2);background:transparent;color:var(--tx2);cursor:pointer;font-family:var(--sans);transition:all .12s;}
+.jt:hover{background:var(--sur2);}
+.jt.active{background:var(--tx);color:#fff;border-color:var(--tx);}
+
+/* ── Drop zones ── */
+.drop-zone{border:1.5px dashed var(--bd2);border-radius:var(--r);padding:28px 20px;text-align:center;cursor:pointer;position:relative;transition:all .15s;background:var(--bg);}
+.drop-zone:hover,.drop-zone.drag{border-color:var(--ac);background:#eef3fc;}
+.drop-zone input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%;}
+.drop-zone.loaded{border-style:solid;border-color:var(--gn-bd);background:var(--gn-bg);}
+.drop-zone.loaded .dz-sub{color:var(--gn);font-weight:500;}
+.dz-icon{font-size:26px;color:var(--tx3);margin-bottom:4px;}
+.dz-sub{font-size:12px;color:var(--tx2);}
+.hint{font-size:11px;margin-top:4px;min-height:16px;font-family:var(--mono);}
+
+/* ── Tabs row for upload/paste ── */
+.tab-row{display:flex;gap:4px;margin-bottom:8px;}
+
+/* ── Pair box ── */
+.pair-box{border:1px solid var(--bd);border-radius:var(--r);padding:16px 18px;margin-bottom:12px;background:var(--bg);}
+
+/* ── Output ── */
+.prompt-out{background:#1c1a16;color:#e8e6de;border-radius:var(--r);padding:18px 20px;font-family:var(--mono);font-size:12px;white-space:pre-wrap;word-break:break-word;line-height:1.75;max-height:560px;overflow-y:auto;}
+.output-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;}
+.output-label{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.07em;color:var(--tx3);}
+.copy-msg{font-size:12px;color:var(--gn);margin-top:8px;min-height:16px;}
+
+/* ── Alert ── */
+.alert{padding:10px 14px;border-radius:var(--r);font-size:13px;border:1px solid;margin-top:14px;}
+.alert-error{background:var(--rd-bg);border-color:var(--rd-bd);color:var(--rd);}
+
+/* ── Action row ── */
+.action-row{display:flex;gap:10px;align-items:center;margin-top:4px;}
+
+hr.div{border:none;border-top:1px solid var(--bd);margin:22px 0;}
+
+/* ── Toast ── */
+#toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:var(--tx);color:#fff;font-size:13px;padding:9px 20px;border-radius:99px;opacity:0;pointer-events:none;transition:opacity .2s;white-space:nowrap;z-index:999;}
+#toast.show{opacity:1;}
+
+@keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+.fade{animation:fadeIn .25s ease both;}
+</style>
+</head>
+<body>
+<div id="toast"></div>
+
+<header class="topbar">
+  <span class="topbar-brand">Review de Dashboard</span>
+  <span class="topbar-sep"></span>
+  <span class="topbar-sub">Syonet · Squad Dashboards</span>
+</header>
+
+<div class="page">
+
+  <div class="banner">
+    <span>ℹ</span>
+    <span>Gere o prompt aqui e cole no <strong>destino escolhido</strong> (Gemini Gems Revisor ou NotebookLM) para a revisão com contexto completo.</span>
+  </div>
+
+  <!-- SOLICITACAO -->
+  <div class="card">
+    <div class="card-title">Solicitação</div>
+
+    <div style="margin-bottom:14px;">
+      <label class="lbl">Descrição da solicitação</label>
+      <div style="font-size:11px;color:var(--tx3);margin-bottom:6px;">O que o cliente ou suporte pediu — texto original do chamado, sem interpretações.</div>
+      <textarea id="req" rows="4" placeholder="Cole aqui o texto da solicitação original."></textarea>
+    </div>
+
+    <div style="margin-bottom:14px;">
+      <label class="lbl">Contexto da demanda
+        <span style="font-size:10px;color:var(--tx3);font-weight:400;text-transform:none;letter-spacing:0;"> — opcional</span>
+      </label>
+      <div style="font-size:11px;color:var(--tx3);margin-bottom:6px;">Complementos que afetam o escopo: regras confirmadas em chat, restrições levantadas, decisões tomadas durante a tratativa.</div>
+      <textarea id="ctx-extra" rows="4" placeholder="Ex: Cliente confirmou que só quer exibir mês atual. Suporte informou que o campo X não existe nesse cliente..."></textarea>
+    </div>
+
+    <div style="margin-bottom:14px;">
+      <label class="lbl">Contexto do analista
+        <span style="font-size:10px;color:var(--tx3);font-weight:400;text-transform:none;letter-spacing:0;"> — opcional</span>
+      </label>
+      <div style="font-size:11px;color:var(--tx3);margin-bottom:6px;">Sua visão sobre o ajuste realizado: limitações encontradas, motivo de diferença em relação ao escopo, decisões técnicas. Não é fonte da verdade — a IA pode discordar.</div>
+      <textarea id="ctx-analyst" rows="4" placeholder="Ex: Fiz diferente do solicitado porque o sistema não permite X. Usei Y como alternativa..."></textarea>
+    </div>
+
+    <div>
+      <label class="lbl" style="margin-bottom:6px;display:block;">Destino do prompt</label>
+      <div style="display:flex;gap:16px;flex-wrap:wrap;font-size:13px;">
+        <label style="display:flex;align-items:center;gap:6px;cursor:pointer;"><input type="radio" name="destino" value="gems" checked onchange="onDestinoChange()"> Gemini Gems (Revisor)</label>
+        <label style="display:flex;align-items:center;gap:6px;cursor:pointer;"><input type="radio" name="destino" value="notebooklm" onchange="onDestinoChange()"> NotebookLM</label>
+      </div>
+    </div>
+  </div>
+
+  <!-- ARQUIVOS -->
+  <div class="card">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:10px;">
+      <div class="card-title" style="margin-bottom:0;">Arquivos</div>
+      <div class="controls-row">
+        <div class="controls-row" style="gap:6px;">
+          <button class="jt active" id="vtype-json" onclick="setValType('json')">Dashboard (JSON)</button>
+          <button class="jt" id="vtype-sql" onclick="setValType('sql')">View / SQL</button>
+        </div>
+        <div class="controls-sep"></div>
+        <div class="controls-row" style="gap:6px;">
+          <button class="jt active" id="vop-alter" onclick="setValOp('alter')">Alteração</button>
+          <button class="jt" id="vop-create" onclick="setValOp('create')">Criação</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- JSON ALTER -->
+    <div id="inputs-json-alter">
+      <div class="controls-row" style="margin-bottom:16px;">
+        <span class="controls-label">Dashboards:</span>
+        <button class="jt active" id="jmode-single" onclick="setJsonMode('single')">Único</button>
+        <button class="jt" id="jmode-multi" onclick="setJsonMode('multi')">Múltiplos</button>
+      </div>
+
+      <div id="json-single-inputs">
+        <div class="grid2">
+          <div>
+            <label class="lbl">Original (antes)</label>
+            <div class="tab-row">
+              <button class="jt active" id="btn-before-upload" onclick="switchMode('before','upload')">Upload</button>
+              <button class="jt" id="btn-before-paste" onclick="switchMode('before','paste')">Colar JSON</button>
+            </div>
+            <div id="before-upload">
+              <div class="drop-zone" id="zone-before" ondragover="onDrag(event,'zone-before')" ondragleave="offDrag('zone-before')" ondrop="onDrop(event,'before')">
+                <input type="file" accept=".json" onchange="onFile(event,'before')">
+                <div class="dz-icon">↑</div>
+                <div class="dz-sub" id="dz-before">Clique ou arraste o .json</div>
+              </div>
+            </div>
+            <div id="before-paste" style="display:none;">
+              <textarea id="paste-before" class="mono-text" rows="10" oninput="onPaste('before')" placeholder="Cole o JSON aqui..."></textarea>
+            </div>
+            <div class="hint" id="hint-before"></div>
+          </div>
+          <div>
+            <label class="lbl">Modificado (depois)</label>
+            <div class="tab-row">
+              <button class="jt active" id="btn-after-upload" onclick="switchMode('after','upload')">Upload</button>
+              <button class="jt" id="btn-after-paste" onclick="switchMode('after','paste')">Colar JSON</button>
+            </div>
+            <div id="after-upload">
+              <div class="drop-zone" id="zone-after" ondragover="onDrag(event,'zone-after')" ondragleave="offDrag('zone-after')" ondrop="onDrop(event,'after')">
+                <input type="file" accept=".json" onchange="onFile(event,'after')">
+                <div class="dz-icon">↑</div>
+                <div class="dz-sub" id="dz-after">Clique ou arraste o .json</div>
+              </div>
+            </div>
+            <div id="after-paste" style="display:none;">
+              <textarea id="paste-after" class="mono-text" rows="10" oninput="onPaste('after')" placeholder="Cole o JSON aqui..."></textarea>
+            </div>
+            <div class="hint" id="hint-after"></div>
+          </div>
+        </div>
+      </div>
+
+      <div id="json-multi-inputs" style="display:none;">
+        <div id="multi-pairs"></div>
+        <button onclick="addPair()" style="font-size:12px;margin-top:4px;">+ Adicionar dashboard</button>
+      </div>
+
+      <hr class="div" style="margin:18px 0;">
+
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+        <label class="lbl" style="margin-bottom:0;">Dashboards de referência
+          <span style="font-size:10px;color:var(--tx3);font-weight:400;text-transform:none;letter-spacing:0;"> — opcional, para alteração por cópia</span>
+        </label>
+        <button onclick="addRefDashAlter()" style="font-size:12px;">+ Adicionar referência</button>
+      </div>
+      <div style="font-size:11px;color:var(--tx3);margin-bottom:10px;">Suba o(s) JSON(s) de origem. O Gems identificará o elemento a comparar pela solicitação — somente o trecho relevante ao chamado será avaliado, não o dashboard inteiro.</div>
+      <div id="ref-dashboards-alter"></div>
+    </div>
+
+    <!-- JSON CREATE -->
+    <div id="inputs-json-create" style="display:none;">
+      <label class="lbl">JSON do novo dashboard</label>
+      <div class="tab-row">
+        <button class="jt active" id="btn-new-upload" onclick="switchMode('new','upload')">Upload</button>
+        <button class="jt" id="btn-new-paste" onclick="switchMode('new','paste')">Colar JSON</button>
+      </div>
+      <div id="new-upload">
+        <div class="drop-zone" id="zone-new" ondragover="onDrag(event,'zone-new')" ondragleave="offDrag('zone-new')" ondrop="onDrop(event,'new')">
+          <input type="file" accept=".json" onchange="onFile(event,'new')">
+          <div class="dz-icon">↑</div>
+          <div class="dz-sub" id="dz-new">Clique ou arraste o .json</div>
+        </div>
+      </div>
+      <div id="new-paste" style="display:none;">
+        <textarea id="paste-new" class="mono-text" rows="12" oninput="onPaste('new')" placeholder="Cole o JSON aqui..."></textarea>
+      </div>
+      <div class="hint" id="hint-new"></div>
+
+      <hr class="div" style="margin:18px 0;">
+
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+        <label class="lbl" style="margin-bottom:0;">Dashboards de referência
+          <span style="font-size:10px;color:var(--tx3);font-weight:400;text-transform:none;letter-spacing:0;"> — opcional, para criação por cópia</span>
+        </label>
+        <button onclick="addRefDash()" style="font-size:12px;">+ Adicionar referência</button>
+      </div>
+      <div style="font-size:11px;color:var(--tx3);margin-bottom:10px;">Suba os JSONs dos dashboards de origem. O Gems identificará as abas a comparar pela solicitação.</div>
+      <div id="ref-dashboards"></div>
+    </div>
+
+    <!-- SQL ALTER -->
+    <div id="inputs-sql-alter" style="display:none;">
+      <div class="grid2">
+        <div>
+          <label class="lbl">Query original (antes)</label>
+          <textarea id="sql-before" class="mono-text" rows="14" placeholder="Cole aqui a query SQL original..."></textarea>
+        </div>
+        <div>
+          <label class="lbl">Query modificada (depois)</label>
+          <textarea id="sql-after" class="mono-text" rows="14" placeholder="Cole aqui a query SQL modificada..."></textarea>
+        </div>
+      </div>
+    </div>
+
+    <!-- SQL CREATE -->
+    <div id="inputs-sql-create" style="display:none;">
+      <label class="lbl">Nova query SQL</label>
+      <textarea id="sql-new" class="mono-text" rows="16" placeholder="Cole aqui a nova query SQL criada..."></textarea>
+    </div>
+  </div>
+
+  <!-- ACTIONS -->
+  <div class="action-row">
+    <button class="primary" onclick="run()">Gerar Prompt para o Chat</button>
+    <button onclick="clearAll()">Limpar</button>
+  </div>
+
+  <div id="val-out"></div>
+
+</div><!-- /page -->
+
+<script>
+// ── State ──────────────────────────────────────────────────────────────────
+const files = { before:null, after:null, 'new':null };
+let valType='json', valOp='alter', jsonMode='single';
+const multiPairs=[];
+let pairCounter=0;
+const refDashboards=[];
+let refCounter=0;
+const refDashboardsAlter=[];
+let refCounterAlter=0;
+
+function toast(msg,dur=2500){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),dur);}
+
+// ── Controls ───────────────────────────────────────────────────────────────
+function setValType(t){valType=t;document.getElementById('vtype-json').classList.toggle('active',t==='json');document.getElementById('vtype-sql').classList.toggle('active',t==='sql');refreshInputs();}
+function setValOp(op){valOp=op;document.getElementById('vop-alter').classList.toggle('active',op==='alter');document.getElementById('vop-create').classList.toggle('active',op==='create');refreshInputs();}
+function setJsonMode(m){
+  jsonMode=m;
+  document.getElementById('jmode-single').classList.toggle('active',m==='single');
+  document.getElementById('jmode-multi').classList.toggle('active',m==='multi');
+  document.getElementById('json-single-inputs').style.display=m==='single'?'':'none';
+  document.getElementById('json-multi-inputs').style.display=m==='multi'?'':'none';
+  if(m==='multi'&&multiPairs.length===0)addPair();
+}
+function refreshInputs(){
+  const key=valType+'-'+valOp;
+  ['json-alter','json-create','sql-alter','sql-create'].forEach(k=>document.getElementById('inputs-'+k).style.display=k===key?'':'none');
+}
+
+// ── Upload / paste single ──────────────────────────────────────────────────
+function switchMode(side,mode){
+  document.getElementById(side+'-upload').style.display=mode==='upload'?'':'none';
+  document.getElementById(side+'-paste').style.display=mode==='paste'?'':'none';
+  document.getElementById('btn-'+side+'-upload').classList.toggle('active',mode==='upload');
+  document.getElementById('btn-'+side+'-paste').classList.toggle('active',mode==='paste');
+}
+function onDrag(e,zId){e.preventDefault();document.getElementById(zId).classList.add('drag');}
+function offDrag(zId){document.getElementById(zId).classList.remove('drag');}
+function onDrop(e,side){e.preventDefault();offDrag('zone-'+side);const f=e.dataTransfer?.files?.[0];if(f)loadFile(f,side);}
+function onFile(e,side){const f=e.target.files?.[0];if(f)loadFile(f,side);}
+function loadFile(file,side){
+  const r=new FileReader();
+  r.onload=ev=>{
+    try{files[side]=JSON.parse(ev.target.result);
+      document.getElementById('zone-'+side).classList.add('loaded');
+      document.getElementById('dz-'+side).textContent='✓ '+file.name;
+      const h=document.getElementById('hint-'+side);if(h)h.innerHTML='<span style="color:var(--gn);">JSON válido</span>';
+    }catch(err){const h=document.getElementById('hint-'+side);if(h)h.innerHTML='<span style="color:var(--rd);">Erro: '+err.message+'</span>';}
+  };r.readAsText(file);
+}
+function onPaste(side){
+  const val=document.getElementById('paste-'+side).value.trim();
+  const h=document.getElementById('hint-'+side);
+  if(!val){files[side]=null;if(h)h.innerHTML='';return;}
+  try{files[side]=JSON.parse(val);if(h)h.innerHTML='<span style="color:var(--gn);">JSON válido</span>';}
+  catch(e){files[side]=null;if(h)h.innerHTML='<span style="color:var(--rd);">Erro: '+e.message+'</span>';}
+}
+
+// ── Multi-pair ─────────────────────────────────────────────────────────────
+function addPair(){const id=++pairCounter;multiPairs.push({id,label:'Dashboard '+id,before:null,after:null});renderPairs();}
+function removePair(id){const idx=multiPairs.findIndex(p=>p.id===id);if(idx!==-1)multiPairs.splice(idx,1);renderPairs();}
+function updatePairLabel(id,val){const p=multiPairs.find(p=>p.id===id);if(p)p.label=val;}
+function onDropPair(e,id,side){e.preventDefault();document.getElementById('mpz-'+side+'-'+id).classList.remove('drag');const f=e.dataTransfer?.files?.[0];if(f)loadFilePair(f,id,side);}
+function onFilePair(e,id,side){const f=e.target.files?.[0];if(f)loadFilePair(f,id,side);}
+function loadFilePair(file,id,side){
+  const r=new FileReader();
+  r.onload=ev=>{
+    try{const parsed=JSON.parse(ev.target.result);const p=multiPairs.find(p=>p.id===id);if(p)p[side]=parsed;
+      const z=document.getElementById('mpz-'+side+'-'+id);
+      if(z){z.classList.add('loaded');z.querySelector('.dz-sub').textContent='✓ '+file.name;}
+    }catch(err){toast('JSON inválido: '+err.message);}
+  };r.readAsText(file);
+}
+function renderPairs(){
+  document.getElementById('multi-pairs').innerHTML=multiPairs.map(p=>{
+    const rm=multiPairs.length>1?'<button class="sm danger" onclick="removePair('+p.id+')">Remover</button>':'';
+    const dz=side=>'<div class="drop-zone'+(p[side]?' loaded':'')+'" id="mpz-'+side+'-'+p.id+'" '+
+      'ondragover="onDrag(event,\'mpz-'+side+'-'+p.id+'\')" ondragleave="offDrag(\'mpz-'+side+'-'+p.id+'\')" '+
+      'ondrop="onDropPair(event,'+p.id+',\''+side+'\')">' +
+      '<input type="file" accept=".json" onchange="onFilePair(event,'+p.id+',\''+side+'\')">' +
+      '<div class="dz-icon">↑</div>' +
+      '<div class="dz-sub">'+(p[side]?'✓ carregado':'Clique ou arraste o .json')+'</div></div>';
+    return '<div class="pair-box">'+
+      '<div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">'+
+        '<label class="lbl" style="margin-bottom:0;flex-shrink:0;">Nome:</label>'+
+        '<input type="text" value="'+p.label+'" oninput="updatePairLabel('+p.id+',this.value)" style="flex:1;">'+
+        rm+'</div>'+
+      '<div class="grid2">'+
+        '<div><label class="lbl">Original (antes)</label>'+dz('before')+'</div>'+
+        '<div><label class="lbl">Modificado (depois)</label>'+dz('after')+'</div>'+
+      '</div></div>';
+  }).join('');
+}
+
+// ── Ref dashboards (criação por cópia) ────────────────────────────────────
+function addRefDash(){const id=++refCounter;refDashboards.push({id,label:'Dashboard '+(refDashboards.length+1),json:null});renderRefDashboards();}
+function removeRefDash(id){const idx=refDashboards.findIndex(r=>r.id===id);if(idx!==-1)refDashboards.splice(idx,1);renderRefDashboards();}
+function updateRefLabel(id,val){const r=refDashboards.find(r=>r.id===id);if(r)r.label=val;}
+function onDropRef(e,id){e.preventDefault();document.getElementById('rz-'+id).classList.remove('drag');const f=e.dataTransfer?.files?.[0];if(f)loadRefFile(f,id);}
+function onFileRef(e,id){const f=e.target.files?.[0];if(f)loadRefFile(f,id);}
+function loadRefFile(file,id){
+  const r2=new FileReader();
+  r2.onload=ev=>{
+    try{const parsed=JSON.parse(ev.target.result);const r=refDashboards.find(r=>r.id===id);if(r)r.json=parsed;
+      const z=document.getElementById('rz-'+id);
+      if(z){z.classList.add('loaded');z.querySelector('.dz-sub').textContent='✓ '+file.name;}
+    }catch(err){toast('JSON inválido: '+err.message);}
+  };r2.readAsText(file);
+}
+function renderRefDashboards(){
+  document.getElementById('ref-dashboards').innerHTML=refDashboards.map(r=>{
+    const rm='<button class="sm danger" onclick="removeRefDash('+r.id+')">Remover</button>';
+    return '<div class="pair-box">'+
+      '<div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">'+
+        '<label class="lbl" style="margin-bottom:0;flex-shrink:0;">Nome:</label>'+
+        '<input type="text" value="'+r.label+'" oninput="updateRefLabel('+r.id+',this.value)" style="flex:1;">'+
+        rm+'</div>'+
+      '<div class="drop-zone'+(r.json?' loaded':'')+'" id="rz-'+r.id+'" '+
+        'ondragover="onDrag(event,\'rz-'+r.id+'\')" ondragleave="offDrag(\'rz-'+r.id+'\')" '+
+        'ondrop="onDropRef(event,'+r.id+')">'+
+        '<input type="file" accept=".json" onchange="onFileRef(event,'+r.id+')">'+
+        '<div class="dz-icon">↑</div>'+
+        '<div class="dz-sub">'+(r.json?'✓ carregado':'Clique ou arraste o .json')+'</div>'+
+      '</div>'+
+    '</div>';
+  }).join('');
+}
+
+// ── Ref dashboards (alteração por cópia) ─────────────────────────────────
+function addRefDashAlter(){const id=++refCounterAlter;refDashboardsAlter.push({id,label:'Referência '+(refDashboardsAlter.length+1),json:null});renderRefDashboardsAlter();}
+function removeRefDashAlter(id){const idx=refDashboardsAlter.findIndex(r=>r.id===id);if(idx!==-1)refDashboardsAlter.splice(idx,1);renderRefDashboardsAlter();}
+function updateRefLabelAlter(id,val){const r=refDashboardsAlter.find(r=>r.id===id);if(r)r.label=val;}
+function onDropRefAlter(e,id){e.preventDefault();document.getElementById('rza-'+id).classList.remove('drag');const f=e.dataTransfer?.files?.[0];if(f)loadRefFileAlter(f,id);}
+function onFileRefAlter(e,id){const f=e.target.files?.[0];if(f)loadRefFileAlter(f,id);}
+function loadRefFileAlter(file,id){
+  const r2=new FileReader();
+  r2.onload=ev=>{
+    try{const parsed=JSON.parse(ev.target.result);const r=refDashboardsAlter.find(r=>r.id===id);if(r)r.json=parsed;
+      const z=document.getElementById('rza-'+id);
+      if(z){z.classList.add('loaded');z.querySelector('.dz-sub').textContent='✓ '+file.name;}
+    }catch(err){toast('JSON inválido: '+err.message);}
+  };r2.readAsText(file);
+}
+function renderRefDashboardsAlter(){
+  document.getElementById('ref-dashboards-alter').innerHTML=refDashboardsAlter.map(r=>{
+    const rm='<button class="sm danger" onclick="removeRefDashAlter('+r.id+')">Remover</button>';
+    return '<div class="pair-box">'+
+      '<div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">'+
+        '<label class="lbl" style="margin-bottom:0;flex-shrink:0;">Nome:</label>'+
+        '<input type="text" value="'+r.label+'" oninput="updateRefLabelAlter('+r.id+',this.value)" style="flex:1;">'+
+        rm+'</div>'+
+      '<div class="drop-zone'+(r.json?' loaded':'')+'" id="rza-'+r.id+'" '+
+        'ondragover="onDrag(event,\'rza-'+r.id+'\')" ondragleave="offDrag(\'rza-'+r.id+'\')" '+
+        'ondrop="onDropRefAlter(event,'+r.id+')">'+
+        '<input type="file" accept=".json" onchange="onFileRefAlter(event,'+r.id+')">'+
+        '<div class="dz-icon">↑</div>'+
+        '<div class="dz-sub">'+(r.json?'✓ carregado':'Clique ou arraste o .json')+'</div>'+
+      '</div>'+
+    '</div>';
+  }).join('');
+}
+
+// ── Diff engine ────────────────────────────────────────────────────────────
+function computeLCS(b,a){
+  const m=b.length,n=a.length;if(m>2000||n>2000)return null;
+  const dp=Array.from({length:m+1},()=>new Int32Array(n+1));
+  for(let i=1;i<=m;i++)for(let j=1;j<=n;j++)
+    dp[i][j]=b[i-1]===a[j-1]?dp[i-1][j-1]+1:Math.max(dp[i-1][j],dp[i][j-1]);
+  const ops=[];let i=m,j=n;
+  while(i>0||j>0){
+    if(i>0&&j>0&&b[i-1]===a[j-1]){ops.unshift({t:'=',l:b[i-1]});i--;j--;}
+    else if(j>0&&(i===0||dp[i][j-1]>=dp[i-1][j])){ops.unshift({t:'+',l:a[j-1]});j--;}
+    else{ops.unshift({t:'-',l:b[i-1]});i--;}
+  }return ops;
+}
+// ── CONFIG-SYNC — manter em sincronia com scripts/review_diff.py ─────────────
+// SKIP_FIELDS   → review_diff.py l.21  (campos de metadados ignorados globalmente)
+// IDENTITY_KEYS → review_diff.py l.85  (chaves usadas para casar itens em listas)
+// _SQL_KW       → review_diff.py l.24  (keywords SQL para quebra de linha)
+//
+// Nota: este arquivo usa abordagem whitelist em extractStructure() — apenas os
+// campos relevantes são extraídos — em vez de blacklist por SKIP_FIELDS.
+// SKIP_FIELDS é aplicado abaixo apenas no loop de config de widget (campos
+// dinâmicos). IDENTITY_KEYS é referência: o código usa 'nome' diretamente.
+//
+// Qualquer alteração nessas listas deve ser replicada no arquivo correspondente.
+// ─────────────────────────────────────────────────────────────────────────────
+const _SKIP_FIELDS=new Set(['$id','primaryKey','usuarioInc','usuarioAlt','dataInc','dataAlt','externo']);
+const _IDENTITY_KEYS=['nome','id','name','titulo']; // referência — ver nota acima
+function _itemKey(obj){for(const k of _IDENTITY_KEYS)if(obj[k]!==undefined)return String(obj[k]);return null;}
+function diffArrayByKey(bArr,aArr){
+  // tenta casar itens por identity key; fallback para índice se não houver chave
+  const bKeyed={},aKeyed={},bOrd=[],aOrd=[];
+  let useKey=true;
+  for(const item of bArr){const k=_itemKey(item);if(k===null){useKey=false;break;}bKeyed[k]=item;bOrd.push(k);}
+  if(useKey)for(const item of aArr){const k=_itemKey(item);if(k===null){useKey=false;break;}aKeyed[k]=item;aOrd.push(k);}
+  if(!useKey){
+    const ch=[];
+    for(let i=0;i<Math.max(bArr.length,aArr.length);i++){
+      const bA=bArr[i]||{},aA=aArr[i]||{};
+      const fields=[];
+      for(const f of new Set([...Object.keys(bA),...Object.keys(aA)]))
+        if(JSON.stringify(bA[f])!==JSON.stringify(aA[f]))fields.push({field:f,before:bA[f],after:aA[f]});
+      if(fields.length)ch.push({key:String(i),status:'modified',fields});
+    }
+    return ch;
+  }
+  const allKeys=[...new Set([...bOrd,...aOrd])];
+  const ch=[];
+  for(const k of allKeys){
+    const bI=bKeyed[k],aI=aKeyed[k];
+    if(!bI){ch.push({key:k,status:'added',item:aI});continue;}
+    if(!aI){ch.push({key:k,status:'removed',item:bI});continue;}
+    const fields=[];
+    for(const f of new Set([...Object.keys(bI),...Object.keys(aI)]))
+      if(JSON.stringify(bI[f])!==JSON.stringify(aI[f]))fields.push({field:f,before:bI[f],after:aI[f]});
+    if(fields.length)ch.push({key:k,status:'modified',fields});
+  }
+  return ch;
+}
+const _SQL_KW=['LEFT OUTER JOIN','FULL OUTER JOIN','PARTITION BY','INNER JOIN',
+  'RIGHT JOIN','FULL JOIN','CROSS JOIN','LEFT JOIN','UNION ALL','GROUP BY',
+  'ORDER BY','INTERSECT','EXCEPT','HAVING','SELECT','WHERE','UNION','LIMIT',
+  'OFFSET','WITH','FROM','CASE','ELSE ','THEN ','WHEN ','OVER ','AND ','OR ','END','ON ']
+  .sort((a,b)=>b.length-a.length);
+const _sqlKwRe=new RegExp('('+_SQL_KW.map(k=>k.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')).join('|')+')', 'gi');
+function formatSql(q){
+  if(!q)return'';
+  if(q.includes('\n'))return q.split('\n').map(l=>l.trim()).filter(Boolean).join('\n');
+  return q.replace(_sqlKwRe,'\n$1').split('\n').map(l=>l.trim()).filter(Boolean).join('\n');
+}
+function sqlLineDiff(before,after,ctx=2){
+  const b=formatSql(before).split('\n').map(l=>l.trimEnd());
+  const a=formatSql(after).split('\n').map(l=>l.trimEnd());
+  const ops=computeLCS(b,a);
+  if(!ops)return'[diff omitido — query muito grande]';
+  if(!ops.some(o=>o.t!=='='))return null;
+  const show=new Set();
+  ops.forEach((o,i)=>{if(o.t!=='=')for(let j=Math.max(0,i-ctx);j<=Math.min(ops.length-1,i+ctx);j++)show.add(j);});
+  const sorted=[...show].sort((a,b)=>a-b);
+  const lines=[];let last=-1;
+  for(const i of sorted){
+    if(last!==-1&&i>last+1)lines.push('[...]');
+    const p=ops[i].t==='='?' ':ops[i].t==='+'?'+':'-';
+    lines.push(p+ops[i].l);
+    last=i;
+  }
+  return lines.join('\n');
+}
+// Chave estável para filtros internos de widget (config.filtros) — igual ao Python
+function _configFiltroKey(f,i){const col=f.coluna||'';return col?col+'|'+(f.comparacao||''):String(f.id!=null?f.id:i);}
+function compareFiltrosConfig(before,after){
+  const bmap=Object.fromEntries(before.map((f,i)=>[_configFiltroKey(f,i),f]));
+  const amap=Object.fromEntries(after.map((f,i)=>[_configFiltroKey(f,i),f]));
+  const skip=new Set(['id','$new']);
+  const lines=[];
+  for(const k of new Set([...Object.keys(bmap),...Object.keys(amap)])){
+    const bf=bmap[k],af=amap[k];
+    if(!bf){lines.push('+ Filtro ADICIONADO: "'+_fv(af.label||k)+'"');continue;}
+    if(!af){lines.push('- Filtro REMOVIDO: "'+_fv(bf.label||k)+'"');continue;}
+    const diffs=[];
+    for(const f of new Set([...Object.keys(bf),...Object.keys(af)])){
+      if(skip.has(f))continue;
+      if(JSON.stringify(bf[f])!==JSON.stringify(af[f]))diffs.push('  ~ '+f+': '+_fv(bf[f])+' → '+_fv(af[f]));
+    }
+    if(diffs.length){lines.push('~ Filtro ALTERADO: "'+_fv(af.label||k)+'"');lines.push(...diffs);}
+  }
+  return lines;
+}
+function extractStructure(json){
+  const datasets={},abas=[];
+  for(const item of json){
+    if(item.type==='dataset'){
+      const c=item.content||{};
+      const key=String(c.id??item.id??c.nome??'?');
+      datasets[key]={key,nome:c.nome||'',query:(c.query||'').trim(),_extra:c};
+    }
+    if(item.type==='dashboard'){const c=item.content||{};
+      // filtros do dashboard ignorados intencionalmente — mudanças em filtros aparecem no diff da query
+      for(const a of c.abas||[])abas.push({nome:a.nome,layout:a.layout,descricao:a.descricao||'',
+        widgets:(a.widgets||[]).map(w=>({nome:w.nome,tipoSaida:w.tipoSaida,idDataset:w.idDataset,percentuais:w.percentuais,totalizador:w.totalizador,descricao:w.descricao||'',config:w.config}))});
+    }
+  }return{datasets,abas};
+}
+function buildDiff(b,a){
+  const bs=extractStructure(b),as=extractStructure(a);
+  const diff={datasets:[],abas:[]};
+  for(const id of new Set([...Object.keys(bs.datasets),...Object.keys(as.datasets)])){
+    const bd=bs.datasets[id],ad=as.datasets[id];
+    if(!bd){diff.datasets.push({id,status:'added',nome:ad.nome,query:ad.query});continue;}
+    if(!ad){diff.datasets.push({id,status:'removed',nome:bd.nome});continue;}
+    const ch=[];
+    if(bd.query!==ad.query){const ld=sqlLineDiff(bd.query,ad.query);ch.push({field:'query',lineDiff:ld||'[sem diferença]'});}
+    const bExtra=bd._extra||{},aExtra=ad._extra||{};
+    for(const f of new Set([...Object.keys(bExtra),...Object.keys(aExtra)])){
+      if(f==='query'||_SKIP_FIELDS.has(f))continue;
+      if(JSON.stringify(bExtra[f])!==JSON.stringify(aExtra[f]))ch.push({field:f,before:bExtra[f],after:aExtra[f]});
+    }
+    if(ch.length)diff.datasets.push({id,status:'modified',nome:ad.nome,changes:ch});
+  }
+  const bam=Object.fromEntries(bs.abas.map(a=>[a.nome,a])),aam=Object.fromEntries(as.abas.map(a=>[a.nome,a]));
+  for(const nome of new Set([...Object.keys(bam),...Object.keys(aam)])){
+    const ba=bam[nome],aa=aam[nome];
+    if(!ba){diff.abas.push({nome,status:'added',widgets:aa.widgets.map(w=>({nome:w.nome,tipoSaida:w.tipoSaida,idDataset:w.idDataset,percentuais:w.percentuais,totalizador:w.totalizador,descricao:w.descricao,config:w.config}))});continue;}
+    if(!aa){diff.abas.push({nome,status:'removed'});continue;}
+    const ch=[];
+    if(ba.layout!==aa.layout)ch.push({field:'layout',before:ba.layout,after:aa.layout});
+    if(ba.descricao!==aa.descricao)ch.push({field:'descricao',before:ba.descricao,after:aa.descricao});
+    const bwm=Object.fromEntries(ba.widgets.map(w=>[w.nome,w])),awm=Object.fromEntries(aa.widgets.map(w=>[w.nome,w]));
+    const wch=[];
+    for(const wn of new Set([...Object.keys(bwm),...Object.keys(awm)])){
+      const bw=bwm[wn],aw=awm[wn];
+      if(!bw){wch.push({nome:wn,status:'added'});continue;}
+      if(!aw){wch.push({nome:wn,status:'removed'});continue;}
+      const wc=[];
+      ['tipoSaida','idDataset','percentuais','totalizador','descricao'].forEach(f=>{if(bw[f]!==aw[f])wc.push({field:f,before:bw[f],after:aw[f]});});
+      if(JSON.stringify(bw.config)!==JSON.stringify(aw.config)){
+        const bc=bw.config||{},ac=aw.config||{};
+        const configChanges=[];
+        for(const k of new Set([...Object.keys(bc),...Object.keys(ac)])){
+          if(_SKIP_FIELDS.has(k))continue;
+          if(JSON.stringify(bc[k])===JSON.stringify(ac[k]))continue;
+          if(k==='filtros'){
+            const fc=compareFiltrosConfig(bc[k]||[],ac[k]||[]);
+            if(fc.length)configChanges.push({key:'filtros',filtroChanges:fc});
+          }else if(Array.isArray(bc[k])&&Array.isArray(ac[k])&&bc[k].some(x=>x&&typeof x==='object')){
+            const agChanges=diffArrayByKey(bc[k],ac[k]);
+            if(agChanges.length)configChanges.push({key:k,granular:agChanges});
+          }else{
+            configChanges.push({key:k,before:bc[k],after:ac[k]});
+          }
+        }
+        if(configChanges.length)wc.push({field:'config',configChanges});
+      }
+      if(wc.length)wch.push({nome:wn,status:'modified',changes:wc});
+    }
+    if(ch.length||wch.length)diff.abas.push({nome,status:'modified',changes:ch,widgetChanges:wch});
+  }
+  return diff;
+}
+function _fv(v,mx=100){
+  if(v===null||v===undefined)return'null';
+  if(typeof v==='string'){const s="'"+v.replace(/\\/g,'\\\\').replace(/'/g,"\\'")+"'";return s.length<=mx?s:s.slice(0,mx-3)+'...\'';}
+  const s=JSON.stringify(v);return s.length<=mx?s:s.slice(0,mx-3)+'...';
+}
+function formatDiffAsText(diff,label){
+  const lines=[];
+  if(label){lines.push('=== DIFF: '+label+' ===');lines.push('');}
+  // ── DATASETS ──
+  lines.push('━━ DATASETS ━━');
+  if(!diff.datasets.length){
+    lines.push('(sem alterações)');
+  }else{
+    for(const d of diff.datasets){
+      if(d.status==='added'){
+        lines.push('+ Dataset ADICIONADO: "'+d.nome+'" (id='+d.id+')');
+        if(d.query){lines.push('  Query:');for(const l of formatSql(d.query).split('\n'))lines.push('  '+l);}
+        continue;
+      }
+      if(d.status==='removed'){lines.push('- Dataset REMOVIDO: "'+d.nome+'" (id='+d.id+')');continue;}
+      lines.push('~ Dataset ALTERADO: "'+d.nome+'" (id='+d.id+')');
+      for(const c of d.changes||[]){
+        if(c.field==='query'){
+          lines.push('  Query alterada:');
+          if(c.lineDiff&&c.lineDiff!=='[sem diferença]'){for(const l of c.lineDiff.split('\n'))lines.push('  '+l);}
+          else lines.push('  (queries idênticas)');
+        }else lines.push('  ~ '+c.field+': '+_fv(c.before)+' → '+_fv(c.after));
+      }
+    }
+  }
+  lines.push('');
+  // ── ABAS / WIDGETS ──
+  lines.push('━━ ABAS / WIDGETS ━━');
+  const abaLines=[];
+  for(const a of diff.abas||[]){
+    if(a.status==='added'){
+      abaLines.push('+ Aba ADICIONADA: "'+a.nome+'"');
+      for(const w of a.widgets||[])abaLines.push('  + Widget: "'+w.nome+'" (tipoSaida='+w.tipoSaida+', idDataset='+w.idDataset+')');
+      continue;
+    }
+    if(a.status==='removed'){abaLines.push('- Aba REMOVIDA: "'+a.nome+'"');continue;}
+    abaLines.push('~ Aba ALTERADA: "'+a.nome+'"');
+    for(const c of a.changes||[]){
+      if(c.before!==undefined)abaLines.push('  ~ '+c.field+': '+_fv(c.before)+' → '+_fv(c.after));
+      else abaLines.push('  ~ '+c.field);
+    }
+    for(const w of a.widgetChanges||[]){
+      if(w.status==='added'){abaLines.push('  + Widget ADICIONADO: "'+w.nome+'"');continue;}
+      if(w.status==='removed'){abaLines.push('  - Widget REMOVIDO: "'+w.nome+'"');continue;}
+      abaLines.push('  ~ Widget ALTERADO: "'+w.nome+'"');
+      for(const c of w.changes||[]){
+        if(c.field==='config'){
+          if(c.configChanges&&c.configChanges.length){
+            abaLines.push('    ~ config:');
+            for(const cc of c.configChanges){
+              if(cc.granular){
+                abaLines.push('      ~ '+cc.key+':');
+                for(const ag of cc.granular){
+                  if(ag.status==='added'){abaLines.push('        + ['+ag.key+']: '+_fv(ag.item,1000));}
+                  else if(ag.status==='removed'){abaLines.push('        - ['+ag.key+']: '+_fv(ag.item,1000));}
+                  else{abaLines.push('        ~ ['+ag.key+']:');for(const f of ag.fields||[])abaLines.push('          ~ '+f.field+': '+_fv(f.before)+' → '+_fv(f.after));}
+                }
+              }else if(cc.filtroChanges){
+                abaLines.push('      ~ filtros:');
+                for(const fc of cc.filtroChanges)abaLines.push('        '+fc);
+              }else abaLines.push('      ~ '+cc.key+': '+_fv(cc.before)+' → '+_fv(cc.after));
+            }
+          }else abaLines.push('    ~ config: (alterado)');
+        }else abaLines.push('    ~ '+c.field+(c.before!==undefined?': '+_fv(c.before)+' → '+_fv(c.after):''));
+      }
+    }
+  }
+  if(abaLines.length){lines.push(...abaLines);}else lines.push('(sem alterações)');
+  lines.push('');
+  return lines.join('\n');
+}
+
+// ── Run ────────────────────────────────────────────────────────────────────
+async function run(){
+  const req=document.getElementById('req').value.trim();
+  if(!req){showMsg('error','Preencha a descrição da solicitação.');return;}
+  let diffText='';
+  const tipo=valType+'-'+valOp;
+  if(tipo==='json-alter'&&jsonMode==='multi'){
+    if(multiPairs.length===0){showMsg('error','Adicione ao menos um par de arquivos.');return;}
+    const inc=multiPairs.filter(p=>!p.before||!p.after);
+    if(inc.length>0){showMsg('error','Faltam arquivos em: '+inc.map(p=>p.label).join(', '));return;}
+    const parts=[];
+    for(const p of multiPairs){try{parts.push(formatDiffAsText(buildDiff(p.before,p.after),p.label));}catch(e){showMsg('error','Erro em "'+p.label+'": '+e.message);return;}}
+    diffText=parts.join('\n\n---\n\n');
+  }else if(tipo==='json-alter'){
+    if(!files.before||!files.after){showMsg('error','Forneça os dois arquivos JSON.');return;}
+    try{diffText=formatDiffAsText(buildDiff(files.before,files.after));}catch(e){showMsg('error','Erro ao processar JSON: '+e.message);return;}
+  }else if(tipo==='json-create'){
+    if(!files['new']){showMsg('error','Forneça o arquivo JSON do novo dashboard.');return;}
+    try{
+      const stNew=extractStructure(files['new']);
+      const refsComJson=refDashboards.filter(r=>r.json);
+      if(refsComJson.length>0){
+        // Modo cópia: extrai estrutura das referências e compara por aba
+        const lines=['Modo: Criação por cópia de dashboard.',''];
+        lines.push('== Novo Dashboard ==');
+        lines.push('Abas: '+(stNew.abas.map(a=>a.nome).join(', ')||'(nenhuma)'));
+        lines.push('Datasets: '+(Object.values(stNew.datasets).map(d=>d.nome||d.key).join(', ')||'(nenhum)'));
+        lines.push('');
+        const refAbaNames=new Set();
+        for(const ref of refsComJson){
+          const stRef=extractStructure(ref.json);
+          lines.push('== Referência: '+ref.label+' ==');
+          lines.push('Abas disponíveis: '+stRef.abas.map(a=>a.nome).join(', '));
+          lines.push('');
+          for(const abaRef of stRef.abas){
+            refAbaNames.add(abaRef.nome);
+            lines.push('--- Aba "'+abaRef.nome+'" — REFERÊNCIA ('+ref.label+') ---');
+            for(const w of abaRef.widgets)lines.push('  Widget: "'+w.nome+'" (tipoSaida='+w.tipoSaida+', idDataset='+w.idDataset+')');
+            const dsIds=[...new Set(abaRef.widgets.map(w=>String(w.idDataset||'')).filter(Boolean))];
+            for(const dsId of dsIds){const ds=stRef.datasets[dsId];if(ds){lines.push('  Dataset: "'+(ds.nome||dsId)+'"');if(ds.query){lines.push('  Query:');for(const l of formatSql(ds.query).split('\n'))lines.push('    '+l);}}}
+            lines.push('');
+            const abaNew=stNew.abas.find(a=>a.nome===abaRef.nome);
+            lines.push('--- Aba "'+abaRef.nome+'" — NOVO DASHBOARD ---');
+            if(!abaNew){lines.push('  [ABA NÃO ENCONTRADA NO NOVO DASHBOARD]');}
+            else{
+              for(const w of abaNew.widgets)lines.push('  Widget: "'+w.nome+'" (tipoSaida='+w.tipoSaida+', idDataset='+w.idDataset+')');
+              const dsIdsNew=[...new Set(abaNew.widgets.map(w=>String(w.idDataset||'')).filter(Boolean))];
+              for(const dsId of dsIdsNew){const ds=stNew.datasets[dsId];if(ds){lines.push('  Dataset: "'+(ds.nome||dsId)+'"');if(ds.query){lines.push('  Query:');for(const l of formatSql(ds.query).split('\n'))lines.push('    '+l);}}}
+            }
+            lines.push('');
+          }
+        }
+        const extraAbas=stNew.abas.filter(a=>!refAbaNames.has(a.nome));
+        if(extraAbas.length){lines.push('== Abas no novo dashboard sem correspondência na referência ==');for(const a of extraAbas)lines.push('  - "'+a.nome+'"');lines.push('');}
+        diffText=lines.join('\n');
+      }else{
+        // Modo simples: sem referências
+        const lines=['Novo dashboard criado.'];
+        lines.push('Datasets: '+(Object.values(stNew.datasets).map(d=>d.nome||d.key).join(', ')||'(nenhum)'));
+        lines.push('Abas: '+(stNew.abas.map(a=>a.nome).join(', ')||'(nenhuma)'));
+        for(const d of Object.values(stNew.datasets)){lines.push('\n--- Dataset: '+(d.nome||d.id)+' ---');if(d.descricao)lines.push('Descricao: '+d.descricao);if(d.query)lines.push('Query:\n'+d.query);}
+        diffText=lines.join('\n');
+      }
+    }catch(e){showMsg('error','Erro ao processar JSON: '+e.message);return;}
+  }else if(tipo==='sql-alter'){
+    const sb=document.getElementById('sql-before').value.trim(),sa=document.getElementById('sql-after').value.trim();
+    if(!sb||!sa){showMsg('error','Forneça as duas queries.');return;}
+    const ld=sqlLineDiff(sb,sa);diffText=ld?'Diff de linhas (SQL):\n'+ld:'(nenhuma diferença detectada)';
+  }else if(tipo==='sql-create'){
+    const sn=document.getElementById('sql-new').value.trim();
+    if(!sn){showMsg('error','Forneça a query criada.');return;}
+    diffText='Nova query criada:\n\n'+sn;
+  }
+  const ctx=(document.getElementById('ctx-extra')?.value||'').trim();
+  const ctxAnalyst=(document.getElementById('ctx-analyst')?.value||'').trim();
+  const isCopy=(tipo==='json-create'&&refDashboards.some(r=>r.json));
+  const refsAlterComJson=refDashboardsAlter.filter(r=>r.json);
+  const isAlterRef=(tipo==='json-alter'&&refsAlterComJson.length>0);
+  if(isAlterRef){
+    let refText='\n\n## Dashboard(s) de Referência\n';
+    refText+='Estrutura completa dos dashboards de origem. Use como contexto para validar se o elemento copiado foi implementado corretamente. O diff acima mostra apenas o ajuste realizado — compare somente o trecho relevante ao chamado, não o dashboard inteiro.\n';
+    for(const ref of refsAlterComJson){
+      try{
+        const stRef=extractStructure(ref.json);
+        refText+='\n=== Referência: '+ref.label+' ===\n';
+        refText+='Abas: '+stRef.abas.map(a=>a.nome).join(', ')+'\n';
+        for(const aba of stRef.abas){
+          refText+='\n--- Aba "'+aba.nome+'" ---\n';
+          for(const w of aba.widgets)refText+='  Widget: "'+w.nome+'" (tipoSaida='+w.tipoSaida+', idDataset='+w.idDataset+')\n';
+          const dsIds=[...new Set(aba.widgets.map(w=>String(w.idDataset||'')).filter(Boolean))];
+          for(const dsId of dsIds){const ds=stRef.datasets[dsId];if(ds){refText+='  Dataset: "'+(ds.nome||dsId)+'"\n';if(ds.query){refText+='  Query:\n';for(const l of formatSql(ds.query).split('\n'))refText+='    '+l+'\n';}}}
+        }
+      }catch(e){showMsg('error','Erro ao processar referência "'+ref.label+'": '+e.message);return;}
+    }
+    diffText+=refText;
+  }
+  let prompt='## Solicitação\n'+req;
+  if(ctx)prompt+='\n\n## Contexto da Demanda\n'+ctx;
+  if(ctxAnalyst)prompt+='\n\n## Contexto do Analista\n*Nota: este contexto representa a visão do analista e não é fonte da verdade — avalie criticamente.*\n\n'+ctxAnalyst;
+  prompt+='\n\n## '+(isCopy?'Estrutura para Comparação':'Diff Estruturado')+'\n'+diffText;
+  const destino=document.querySelector('input[name="destino"]:checked')?.value||'gems';
+  const promptMode=isCopy?'copy':isAlterRef?'alter-ref':'alter';
+  prompt+=instrucaoPara(destino,promptMode);
+  renderPrompt(prompt,destino);
+}
+
+// ── Output ─────────────────────────────────────────────────────────────────
+function getFilename(){
+  const req=document.getElementById('req')?.value||'';
+  const match=req.match(/SYO-\d+/i);
+  const ts=new Date().toISOString().slice(0,16).replace('T','_').replace(/:/g,'');
+  return match?match[0].toUpperCase()+'.md':'review_'+ts+'.md';
+}
+function instrucaoPara(destino,mode='alter'){
+  if(destino==='gems'&&mode==='copy'){
+    return '\n\n## Instrução\n'+
+      'Este é um chamado de criação de dashboard por cópia. A seção "Estrutura para Comparação" acima contém a estrutura do novo dashboard e dos dashboards de referência, organizados por aba.\n'+
+      '\n'+
+      'Identifique as abas que devem ser copiadas a partir da solicitação (não peça essa informação — ela está no chamado). Para cada aba no escopo: compare widgets, datasets e queries do novo dashboard com a referência correspondente. Ignore IDs internos, metadados e layout visual. Aplique as regras de negócio e o guia de review da sua base de conhecimento.\n'+
+      '\n'+
+      'Responda neste formato:\n'+
+      '\n'+
+      'VEREDITO: Concluir / Concluir com ressalvas / Pedir evidências / Não concluir / Incerto\n'+
+      '\n'+
+      'O QUE ESTÁ CORRETO\n'+
+      '- Abas/widgets/queries equivalentes à referência — só o essencial\n'+
+      '\n'+
+      'DIVERGÊNCIAS IDENTIFICADAS\n'+
+      '- Aba, o que difere e o impacto (omitir se não houver)\n'+
+      '\n'+
+      'RESSALVAS\n'+
+      '- Observações que não bloqueiam (omitir se não houver)\n'+
+      '\n'+
+      'COMENTÁRIO PARA O JIRA\n'+
+      '- Inicie com /close; explique em linguagem acessível ao suporte o que foi criado e se está fiel à referência';
+  }
+  if(destino==='gems'&&mode==='alter-ref'){
+    return '\n\n## Instrução\n'+
+      'Este é um chamado de alteração por cópia. O "Diff Estruturado" mostra o ajuste realizado no dashboard. A seção "Dashboard(s) de Referência" contém a estrutura completa dos dashboards de origem — use como contexto para validar se o elemento copiado foi implementado corretamente.\n'+
+      '\n'+
+      'Identifique o elemento que deveria ser copiado a partir da solicitação (não pergunte ao analista — está no chamado). Compare apenas o elemento relevante do diff com o correspondente na referência. Ignore abas e datasets do dashboard de referência que não fazem parte do escopo do chamado. Aplique as regras de negócio e o guia de review da sua base de conhecimento.\n'+
+      '\n'+
+      'Responda neste formato:\n'+
+      '\n'+
+      'VEREDITO: Concluir / Concluir com ressalvas / Pedir evidências / Não concluir / Incerto\n'+
+      '\n'+
+      'O QUE FOI ATENDIDO\n'+
+      '- O que foi corretamente replicado da referência — somente o essencial\n'+
+      '\n'+
+      'DIVERGÊNCIAS IDENTIFICADAS\n'+
+      '- O que difere entre o ajuste e a referência, com impacto (omitir se não houver)\n'+
+      '\n'+
+      'RESSALVAS\n'+
+      '- Observações que não bloqueiam (omitir se não houver)\n'+
+      '\n'+
+      'COMENTÁRIO PARA O JIRA\n'+
+      '- Inicie com /close; explique em linguagem acessível ao suporte o que foi ajustado e se é fiel à referência';
+  }
+  if(destino==='gems'){
+    return '\n\n## Instrução\n'+
+      'Analise se o diff acima atende à solicitação, aplicando as regras de negócio, o catálogo de funções e o guia de review da sua base de conhecimento. Responda neste formato, detalhando só o que falta ou está errado:\n'+
+      '\n'+
+      'VEREDITO: Concluir / Concluir com ressalvas / Pedir evidências / Não concluir / Incerto\n'+
+      '\n'+
+      'O QUE FOI ATENDIDO\n'+
+      '- Resumo breve das alterações corretas — só o essencial, sem explicações longas\n'+
+      '\n'+
+      'PONTOS DE ATENÇÃO\n'+
+      '- O que impede a entrega: o que está errado E o que precisa ser feito para corrigir\n'+
+      '\n'+
+      'RESSALVAS\n'+
+      '- Observações que não bloqueiam, mas merecem atenção (omitir se não houver)\n'+
+      '\n'+
+      'COMENTÁRIO PARA O JIRA\n'+
+      '- Inicie com /close; explique de forma clara o que foi ajustado no dashboard conforme o pedido, em linguagem acessível ao suporte, sem termos técnicos de SQL ou estrutura interna';
+  }
+  return '\n\n## Instrução\nAnalise se o diff acima atende à solicitação, aplicando as regras de negócio e o guia operacional da base. Emita o parecer no formato: VEREDITO (Concluir / Concluir com ressalvas / Pedir evidências / Não concluir / Incerto), o que foi atendido, pontos de atenção e comentário /close para o suporte.';
+}
+function onDestinoChange(){ if(document.getElementById('prompt-content')) run(); }
+function renderPrompt(prompt,destino){
+  const fname=getFilename();
+  const nbInstr=
+'Analise o arquivo '+fname+' e emita um parecer de review.\n'+
+'Utilize o arquivo 01_guia_operacional como guia operacional para estruturar a resposta.\n'+
+'\n'+
+'Retorne a análise neste formato:\n'+
+'\n'+
+'VEREDITO: Concluir / Concluir com ressalvas / Pedir evidências / Não concluir / Incerto\n'+
+'\n'+
+'O QUE FOI ATENDIDO\n'+
+'- Resumo breve das alterações corretas — somente o essencial, sem explicações longas\n'+
+'\n'+
+'PONTOS DE ATENÇÃO\n'+
+'- Riscos técnicos, lacunas de escopo ou inconsistências identificadas\n'+
+'\n'+
+'RESSALVAS\n'+
+'- Observações que não bloqueiam aprovação mas merecem atenção (omitir se não houver)\n'+
+'\n'+
+'COMENTÁRIO PARA O JIRA\n'+
+'- Inicie com /close\n'+
+'- Explique de forma clara e objetiva o que foi ajustado no dashboard conforme o pedido\n'+
+'- Use linguagem acessível ao suporte, sem termos técnicos de SQL ou estrutura interna';
+  const nbBlock = destino==='notebooklm' ?
+    '<div class="output-header">'+
+      '<span class="output-label">Instrução NotebookLM</span>'+
+      '<button onclick="copyNbInstr()" style="font-size:12px;padding:5px 14px;">Copiar instrução</button>'+
+    '</div>'+
+    '<div class="prompt-out fade" id="nb-instr-content" style="max-height:220px;background:#1c3a1c;color:#c8e6c9;">'+escHtml(nbInstr)+'</div>'+
+    '<div class="copy-msg" id="copy-msg-nb" style="margin-bottom:20px;"></div>' : '';
+  const promptLabel = destino==='notebooklm' ? 'Prompt gerado — baixe o .md e suba como fonte no NotebookLM'
+    : 'Prompt gerado — cole num chat novo do Gem Revisor';
+  document.getElementById('val-out').innerHTML=
+    '<hr class="div">'+
+    nbBlock+
+    '<div class="output-header">'+
+      '<span class="output-label">'+promptLabel+'</span>'+
+      '<div style="display:flex;gap:8px;">'+
+        '<button onclick="copyPrompt()" style="font-size:12px;padding:5px 14px;">Copiar prompt</button>'+
+        (destino==='notebooklm'?'<button onclick="downloadPrompt()" style="font-size:12px;padding:5px 14px;">Baixar .md</button>':'')+
+      '</div>'+
+    '</div>'+
+    '<div class="prompt-out fade" id="prompt-content">'+escHtml(prompt)+'</div>'+
+    '<div class="copy-msg" id="copy-msg-prompt"></div>';
+  document.getElementById('val-out').scrollIntoView({behavior:'smooth',block:'nearest'});
+}
+function escHtml(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+function copyNbInstr(){
+  const el=document.getElementById('nb-instr-content');
+  const text=el.innerText||el.textContent;
+  const msg=document.getElementById('copy-msg-nb');
+  const done=()=>{if(msg){msg.textContent='✓ Instrução copiada!';setTimeout(()=>{msg.textContent='';},3000);}};
+  if(navigator.clipboard)navigator.clipboard.writeText(text).then(done).catch(()=>fallbackCopy(text,done));
+  else fallbackCopy(text,done);
+}
+function copyPrompt(){
+  const el=document.getElementById('prompt-content');
+  const text=el.innerText||el.textContent;
+  const msg=document.getElementById('copy-msg-prompt');
+  const done=()=>{if(msg){msg.textContent='✓ Prompt copiado!';setTimeout(()=>{msg.textContent='';},3000);}};
+  if(navigator.clipboard)navigator.clipboard.writeText(text).then(done).catch(()=>fallbackCopy(text,done));
+  else fallbackCopy(text,done);
+}
+function downloadPrompt(){
+  const el=document.getElementById('prompt-content');
+  const text=el.innerText||el.textContent;
+  const fname=getFilename();
+  const blob=new Blob([text],{type:'text/markdown;charset=utf-8'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');a.href=url;a.download=fname;
+  document.body.appendChild(a);a.click();
+  setTimeout(()=>{URL.revokeObjectURL(url);document.body.removeChild(a);},1000);
+  const msg=document.getElementById('copy-msg-prompt');
+  if(msg){msg.textContent='✓ Arquivo '+fname+' baixado!';setTimeout(()=>{msg.textContent='';},3000);}
+}
+function fallbackCopy(text,cb){const ta=document.createElement('textarea');ta.value=text;ta.style.cssText='position:fixed;opacity:0;';document.body.appendChild(ta);ta.select();document.execCommand('copy');document.body.removeChild(ta);if(cb)cb();}
+function showMsg(type,msg){document.getElementById('val-out').innerHTML='<div class="alert alert-'+type+'" style="margin-top:16px;">'+msg+'</div>';}
+
+// ── Clear ──────────────────────────────────────────────────────────────────
+function clearAll(){
+  files.before=null;files.after=null;files['new']=null;
+  refDashboards.length=0;renderRefDashboards();
+  refDashboardsAlter.length=0;renderRefDashboardsAlter();
+  document.getElementById('req').value='';
+  ['before','after','new'].forEach(s=>{
+    const z=document.getElementById('zone-'+s);
+    if(z){z.classList.remove('loaded');document.getElementById('dz-'+s).textContent='Clique ou arraste o .json';const inp=z.querySelector('input');if(inp)inp.value='';}
+    const h=document.getElementById('hint-'+s);if(h)h.innerHTML='';
+    const p=document.getElementById('paste-'+s);if(p)p.value='';
+  });
+  ['sql-before','sql-after','sql-new'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+  const ctxEl=document.getElementById('ctx-extra');if(ctxEl)ctxEl.value='';
+  const ctxAn=document.getElementById('ctx-analyst');if(ctxAn)ctxAn.value='';
+  document.getElementById('val-out').innerHTML='';
+}
+</script>
+</body>
+</html>
