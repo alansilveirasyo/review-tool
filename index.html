@@ -1087,8 +1087,38 @@ function clearAll(){
     <div class="cl-entry">
       <div class="cl-date">2026-06-16</div>
       <div class="cl-items">
-        <b>Fix — datasets falsos removidos/adicionados.</b> Datasets passavam a ser comparados por ID numérico (presente só no JSON "antes") em vez do nome, fazendo todos aparecerem como removidos + adicionados. Agora usa nome como chave primária.<br>
-        <b>Fix — diff enganoso em queries com múltiplos UNION ALL.</b> Filtros do bloco sobrevivente (ex: usuário, empresa, veículo) apareciam como removidos porque o algoritmo de diff alinhava linhas idênticas entre blocos diferentes. Implementado diff bloco a bloco com pareamento semântico por label "Topo".
+        <b>Fix — datasets falsos removidos/adicionados.</b> Quando o JSON "antes" tinha ID numérico e o "depois" não, todos os datasets apareciam como removidos + adicionados. Agora usa nome como chave primária de comparação.<br>
+        <b>Fix — diff enganoso em queries com múltiplos UNION ALL.</b> Filtros do bloco sobrevivente (usuário, empresa, veículo) apareciam como removidos porque o LCS alinhava linhas idênticas entre blocos diferentes. Implementado diff bloco a bloco com pareamento semântico por label "Topo".
+      </div>
+    </div>
+
+    <div class="cl-entry">
+      <div class="cl-date">2026-06-15</div>
+      <div class="cl-items">
+        <b>Fix — limite de agrupamentos de widget.</b> Agrupamentos além de certo número eram truncados na exibição do diff. Limite expandido e regra de filtro de período corrigida.<br>
+        <b>Feat — alteração por cópia com dashboard de referência.</b> Novo modo que aceita um ou mais dashboards de referência para validar se o elemento copiado foi implementado corretamente.
+      </div>
+    </div>
+
+    <div class="cl-entry">
+      <div class="cl-date">2026-06-12</div>
+      <div class="cl-items">
+        <b>Fix — diff de arrays por identity key.</b> Listas de widgets e filtros passaram a ser comparadas por nome/id em vez de posição, evitando falsos "modificado" quando itens eram reordenados.<br>
+        <b>Feat — campos de contexto e instrução de analista.</b> Adicionados três campos de contexto opcionais; campo de contexto do analista incluído no prompt com nota de que não é fonte da verdade.
+      </div>
+    </div>
+
+    <div class="cl-entry">
+      <div class="cl-date">2026-06-05</div>
+      <div class="cl-items">
+        <b>Feat — seletor de destino Gems / NotebookLM.</b> Prompt gerado em formato diferente conforme o destino escolhido.
+      </div>
+    </div>
+
+    <div class="cl-entry">
+      <div class="cl-date">2026-06-03</div>
+      <div class="cl-items">
+        <b>Refactor — alinhamento com review_diff.py.</b> Lógica JS de diff sincronizada com o script Python para comportamento consistente entre CLI e ferramenta web.
       </div>
     </div>
 
