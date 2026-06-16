@@ -641,7 +641,8 @@ function extractStructure(json){
   for(const item of json){
     if(item.type==='dataset'){
       const c=item.content||{};
-      const key=String(c.id??item.id??c.nome??'?');
+      // nome preferido: item.id pode estar ausente no JSON "depois" mesmo presente no "antes". Ver SYO-60912.
+      const key=c.nome||String(c.id??item.id??'?');
       datasets[key]={key,nome:c.nome||'',query:(c.query||'').trim(),_extra:c};
     }
     if(item.type==='dashboard'){const c=item.content||{};
