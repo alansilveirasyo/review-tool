@@ -527,11 +527,46 @@ function formatSql(q){
   if(q.includes('\n'))return q.split('\n').map(l=>l.trim()).filter(Boolean).join('\n');
   return q.replace(_sqlKwRe,'\n$1').split('\n').map(l=>l.trim()).filter(Boolean).join('\n');
 }
-function sqlLineDiff(before,after,ctx=2){
-  const b=formatSql(before).split('\n').map(l=>l.trimEnd());
-  const a=formatSql(after).split('\n').map(l=>l.trimEnd());
+function splitUnionBlocks(sql){
+  // Divide por UNION ALL de nível superior (ignora {…} e (…)).
+  // Motivação: blocos com WHERE idêntico (filtros usuário/empresa/veículo) fazem o LCS
+  // alinhar linhas entre blocos diferentes — filtros do bloco sobrevivente aparecem
+  // como removidos no diff, causando falso "Não concluir". Ver SYO-60912.
+  const blocks=[];const cur=[];let dp=0,db=0,i=0;
+  while(i<sql.length){
+    const ch=sql[i];
+    if(ch==='('){dp++;cur.push(ch);i++;}
+    else if(ch===')'){dp--;cur.push(ch);i++;}
+    else if(ch==='{'){db++;cur.push(ch);i++;}
+    else if(ch==='}'){db--;cur.push(ch);i++;}
+    else if(dp===0&&db===0){
+      const rest=sql.slice(i);
+      const m=rest.match(/^UNION\s+ALL\b/i);
+      if(m){const t=cur.join('').trim();if(t)blocks.push(t);cur.length=0;i+=m[0].length;}
+      else{cur.push(ch);i++;}
+    }else{cur.push(ch);i++;}
+  }
+  const last=cur.join('').trim();if(last)blocks.push(last);
+  return blocks;
+}
+function _topoLabel(block){const m=block.match(/'([^']+)'\s+AS\s+"Topo"/i);return m?m[1]:null;}
+function _blockLabel(block){
+  const t=_topoLabel(block);if(t)return t;
+  for(const ln of block.split('\n')){const s=ln.trim();if(s&&!s.startsWith('/*')&&!s.startsWith('--'))return s.slice(0,60);}
+  return block.slice(0,40);
+}
+function _seqRatio(a,b){
+  // Jaccard aproximado por trigramas — mais rápido que LCS para blocos grandes
+  const ngrams=s=>{const set=new Set();for(let i=0;i+3<=s.length;i++)set.add(s.slice(i,i+3));return set;};
+  const sa=ngrams(a),sb=ngrams(b);
+  let inter=0;for(const g of sa)if(sb.has(g))inter++;
+  return 2*inter/(sa.size+sb.size)||0;
+}
+function _simpleDiff(bStr,aStr,ctx=2){
+  const b=bStr.split('\n').map(l=>l.trimEnd());
+  const a=aStr.split('\n').map(l=>l.trimEnd());
   const ops=computeLCS(b,a);
-  if(!ops)return'[diff omitido — query muito grande]';
+  if(!ops)return'[diff omitido — bloco muito grande]';
   if(!ops.some(o=>o.t!=='='))return null;
   const show=new Set();
   ops.forEach((o,i)=>{if(o.t!=='=')for(let j=Math.max(0,i-ctx);j<=Math.min(ops.length-1,i+ctx);j++)show.add(j);});
@@ -539,11 +574,47 @@ function sqlLineDiff(before,after,ctx=2){
   const lines=[];let last=-1;
   for(const i of sorted){
     if(last!==-1&&i>last+1)lines.push('[...]');
-    const p=ops[i].t==='='?' ':ops[i].t==='+'?'+':'-';
-    lines.push(p+ops[i].l);
+    lines.push((ops[i].t==='='?' ':ops[i].t==='+'?'+':'-')+ops[i].l);
     last=i;
   }
   return lines.join('\n');
+}
+function sqlLineDiff(before,after,ctx=2){
+  const bFmt=formatSql(before),aFmt=formatSql(after);
+  const bBlocks=splitUnionBlocks(bFmt),aBlocks=splitUnionBlocks(aFmt);
+  if(bBlocks.length<=1&&aBlocks.length<=1)return _simpleDiff(bFmt,aFmt,ctx);
+  // Diff bloco a bloco com pareamento semântico (Topo) + fallback por similaridade
+  const matched=new Set();
+  const pairs=[];
+  for(let j=0;j<aBlocks.length;j++){
+    const aT=_topoLabel(aBlocks[j]);
+    let mi=null;
+    if(aT!=null){for(let i=0;i<bBlocks.length;i++){if(!matched.has(i)&&_topoLabel(bBlocks[i])===aT){mi=i;break;}}}
+    if(mi!=null)matched.add(mi);
+    pairs.push([mi,j]);
+  }
+  // Fallback por similaridade para blocos sem par semântico
+  for(let k=0;k<pairs.length;k++){
+    if(pairs[k][0]!=null)continue;
+    const aB=aBlocks[pairs[k][1]];
+    let bestR=-1,bestI=null;
+    for(let i=0;i<bBlocks.length;i++){
+      if(matched.has(i))continue;
+      const r=_seqRatio(bBlocks[i],aB);if(r>bestR){bestR=r;bestI=i;}
+    }
+    if(bestI!=null)matched.add(bestI);
+    pairs[k]=[bestI,pairs[k][1]];
+  }
+  const out=[];
+  // Blocos removidos (compacto)
+  for(let i=0;i<bBlocks.length;i++)if(!matched.has(i))out.push('-[bloco removido: '+_blockLabel(bBlocks[i])+']');
+  // Diffs dos pares
+  for(const [bi,ai] of pairs){
+    const aB=aBlocks[ai];
+    if(bi==null){out.push('+[bloco adicionado: '+_blockLabel(aB)+']');for(const l of aB.split('\n'))out.push('+'+l);}
+    else{const d=_simpleDiff(bBlocks[bi],aB,ctx);if(d)out.push(d);}
+  }
+  return out.join('\n')||null;
 }
 // Chave estável para filtros internos de widget (config.filtros) — igual ao Python
 function _configFiltroKey(f,i){const col=f.coluna||'';return col?col+'|'+(f.comparacao||''):String(f.id!=null?f.id:i);}
